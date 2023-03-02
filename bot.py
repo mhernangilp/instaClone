@@ -45,20 +45,44 @@ def instaloader(targetUsr):
         return downloadDataLogin(targetUsr)
 
 def loadData(targetUsr):
-    ret = []
+    ret = {}
     ls = subprocess.run(["ls", targetUsr], capture_output=True)
     grep = subprocess.run(["grep", ".jpg"], capture_output=True, input=ls.stdout)
-    ret = grep.stdout.decode().split()
+    jpg = grep.stdout.decode().split()
+    for photo in jpg:
+        if "profile_pic" in photo:
+            jpg.remove(photo)
     grep = subprocess.run(["grep", ".txt"], capture_output=True, input=ls.stdout)
-    ret += grep.stdout.decode().split()
+    txt = grep.stdout.decode().split()
+    for photo in jpg:
+        date = photo.split('_')
+        date = date[0] + '_' + date[1]
+        if date not in ret:
+            ret[date] = [[], ""]
+        ret[date][0].append(photo)
+    for caption in txt:
+        date = caption.split('_')
+        date = date[0] + '_' + date[1]
+        if date in ret:
+            ret[date][1] = caption
     return ret
 
 
-print("Select target account:")
-targetUsr = str(input().strip())
-targetUsr = "luisglez._"                   # << delete in future
-firstRun = loadData(targetUsr)
-print(firstRun)
-loginUsr = instaloader(targetUsr)
+def updateDataFirstCall():
+    print("Select target account:")
+    targetUsr = str(input().strip())
+    targetUsr = "luisglez._"                   # << delete in future
+    firstRun = loadData(targetUsr)
+    loginUsr = instaloader(targetUsr)
+    secndRun = loadData(targetUsr)
+    updatedData = secndRun.copy()
+    for date in secndRun:
+        if date in firstRun:
+            del updatedData[date]
+    return updatedData, loginUsr, targetUsr
+
+
+updatedData, loginUsr, targetUsr = updateDataFirstCall()
+print(updatedData)
 print(loginUsr)
 print(targetUsr)
